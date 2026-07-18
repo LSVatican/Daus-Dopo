@@ -16,6 +16,37 @@
             <h1>Daus Dopo Digital Clock</h1>
             <p class="owner">Created by Daus Dopo</p>
         </header>
+        
+        <!-- Tombol Akses -->
+<div class="action-buttons">
+    <button onclick="openModal('create')">+ Pengingat</button>
+    <button onclick="openModal('list')">Daftar Acara</button>
+</div>
+
+<!-- Modal Buat Pengingat -->
+<div id="create-modal" class="modal">
+    <div class="modal-content">
+        <h3>Buat Pengingat</h3>
+        <input type="text" id="rem-title" placeholder="Nama Acara">
+        <input type="time" id="rem-time">
+        <select id="rem-repeat">
+            <option value="once">Sekali Saja</option>
+            <option value="daily">Harian</option>
+        </select>
+        <textarea id="rem-desc" placeholder="Deskripsi (Opsional)"></textarea>
+        <button onclick="saveReminder()">Simpan</button>
+        <button onclick="closeModal('create')">Batal</button>
+    </div>
+</div>
+
+<!-- Modal Daftar Acara -->
+<div id="list-modal" class="modal">
+    <div class="modal-content">
+        <h3>Daftar Acara</h3>
+        <div id="reminder-list"></div>
+        <button onclick="closeModal('list')">Tutup</button>
+    </div>
+</div>
 
         <!-- Display Jam Utama / Countdown -->
         <div class="clock-card">

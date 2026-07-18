@@ -121,3 +121,70 @@ function highlightActiveSholat(sholat) {
 // Jalankan fungsi
 getPrayerTimes();
 setInterval(updateClock, 1000);
+
+// Meminta izin notifikasi saat aplikasi dibuka
+if (Notification.permission !== "granted") Notification.requestPermission();
+
+function openModal(type) { document.getElementById(type + '-modal').style.display = 'flex'; if(type==='list') renderReminders(); }
+function closeModal(type) { document.getElementById(type + '-modal').style.display = 'none'; }
+
+function saveReminder() {
+    let title = document.getElementById('rem-title').value;
+    let time = document.getElementById('rem-time').value;
+    let repeat = document.getElementById('rem-repeat').value;
+    let desc = document.getElementById('rem-desc').value;
+
+    if(!title || !time) return alert("Mohon isi judul dan waktu!");
+
+    let reminders = JSON.parse(localStorage.getItem('myReminders') || '[]');
+    reminders.push({ id: Date.now(), title, time, repeat, desc, triggered: false });
+    localStorage.setItem('myReminders', JSON.stringify(reminders));
+    
+    closeModal('create');
+    alert("Pengingat disimpan!");
+}
+
+function renderReminders() {
+    let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
+    let container = document.getElementById('reminder-list');
+    container.innerHTML = list.map(item => `
+        <div class="list-item">
+            <span><b>${item.title}</b> (${item.time})</span>
+            <button onclick="deleteReminder(${item.id})" style="background:red; color:white; border:none; padding:5px; border-radius:5px;">Hapus</button>
+        </div>
+    `).join('');
+}
+
+function deleteReminder(id) {
+    if(confirm("Yakin ingin menghapus acara ini?")) {
+        let reminders = JSON.parse(localStorage.getItem('myReminders') || '[]');
+        reminders = reminders.filter(r => r.id !== id);
+        localStorage.setItem('myReminders', JSON.stringify(reminders));
+        renderReminders();
+    }
+}
+
+// Cek waktu pengingat setiap detik (di dalam fungsi setInterval utama)
+function checkReminders() {
+    let reminders = JSON.parse(localStorage.getItem('myReminders') || '[]');
+    let now = new Date();
+    let currTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+    reminders.forEach(item => {
+        if (item.time === currTime && !item.triggered) {
+            new Notification("Pengingat: " + item.title, { body: item.desc || "Waktunya acara!" });
+            item.triggered = true;
+            
+            // Hapus jika tidak harian
+            if (item.repeat === 'once') {
+                reminders = reminders.filter(r => r.id !== item.id);
+            }
+        } else if (item.time !== currTime) {
+            item.triggered = false; // Reset trigger saat waktu sudah lewat
+        }
+    });
+    localStorage.setItem('myReminders', JSON.stringify(reminders));
+}
+
+// Tambahkan panggil fungsi checkReminders ke dalam setInterval yang sudah ada
+// setInterval(() => { updateClock(); checkReminders(); }, 1000);
