@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jam Digital & Jadwal Sholat</title>
+    <!-- Favicon dari gambar -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header & Pemilik -->
+        <header>
+            <h1>Daus Dopo Digital Clock</h1>
+            <p class="owner">Created by Daus Dopo</p>
+        </header>
+
+        <!-- Display Jam Utama / Countdown -->
+        <div class="clock-card">
+            <div id="status-label">WAKTU SEKARANG</div>
+            <div id="digital-clock">00:00:00</div>
+            <div id="date-display">Hari, 00 Bulan 2026</div>
+        </div>
+
+        <!-- Jadwal Sholat -->
+        <div class="prayer-schedule">
+            <h3>Jadwal Sholat Hari Ini</h3>
+            <div class="schedule-grid">
+                <div class="prayer-time" id="shubuh-card"><span>Subuh</span> <b id="shubuh-time">--:--</b></div>
+                <div class="prayer-time" id="dhuhr-card"><span>Dzuhur</span> <b id="dhuhr-time">--:--</b></div>
+                <div class="prayer-time" id="asr-card"><span>Ashar</span> <b id="asr-time">--:--</b></div>
+                <div class="prayer-time" id="maghrib-card"><span>Maghrib</span> <b id="maghrib-time">--:--</b></div>
+                <div class="prayer-time" id="isha-card"><span>Isya</span> <b id="isha-time">--:--</b></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio untuk Notifikasi (Opsional, arahkan ke file adzan/beep) -->
+    <audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav" preload="auto"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
