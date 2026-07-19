@@ -8,13 +8,27 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-theme="default">
 
     <div class="container">
         <!-- Header & Pemilik -->
         <header>
             <h1>Daus Dopo Digital Clock</h1>
             <p class="owner">Created by Daus Dopo</p>
+            
+            <!-- Tambahan: Dropdown Setting Warna -->
+            <div class="theme-selector">
+                <label for="bg-theme">Tema Warna:</label>
+                <select id="bg-theme">
+                    <option value="default">Default</option>
+                    <option value="pink">Pink</option>
+                    <option value="merah">Merah</option>
+                    <option value="hijau-muda">Hijau Muda</option>
+                    <option value="biru-tua">Biru Tua</option>
+                    <option value="ungu">Ungu</option>
+                    <option value="pelangi">Pelangi</option>
+                </select>
+            </div>
         </header>
 
         <!-- Display Jam Utama / Countdown -->
@@ -35,37 +49,8 @@
                 <div class="prayer-time" id="isha-card"><span>Isya</span> <b id="isha-time">--:--</b></div>
             </div>
         </div>
-        
-        <!-- Tombol Tambah Pengingat -->
-<button id="open-modal-btn" class="add-btn">+ Tambah Pengingat</button>
-
-<!-- List Pengingat -->
-<div class="reminder-section">
-    <h3>Daftar Acara</h3>
-    <div id="reminder-list"></div>
-</div>
-
-<!-- Modal Pop-up Pengingat -->
-<div id="reminder-modal" class="modal hidden">
-    <div class="modal-content">
-        <h3>Buat Pengingat Baru</h3>
-        <input type="text" id="rem-title" placeholder="Nama Acara">
-        <input type="date" id="rem-date">
-        <input type="time" id="rem-time">
-        <select id="rem-repeat">
-            <option value="none">Sekali Saja</option>
-            <option value="daily">Harian</option>
-        </select>
-        <textarea id="rem-desc" placeholder="Deskripsi (opsional)"></textarea>
-        <div class="modal-actions">
-            <button onclick="closeModal()">Batal</button>
-            <button onclick="saveReminder()" style="background:#ff007f;">Simpan</button>
-        </div>
-    </div>
-</div>
     </div>
 
-    <!-- Audio untuk Notifikasi (Opsional, arahkan ke file adzan/beep) -->
     <audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav" preload="auto"></audio>
 
     <script src="script.js"></script>
