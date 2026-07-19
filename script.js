@@ -1,10 +1,6 @@
-// Konfigurasi Durasi Sholat (dalam satuan MENIT)
+// Konfigurasi Durasi Sholat (dalam menit)
 const durasiSholat = {
-    Fajr: 5,    // Subuh 5 menit
-    Dhuhr: 5,   // Dzuhur 5 menit
-    Asr: 5,     // Ashar 5px
-    Maghrib: 5, // Maghrib 5 menit
-    Isha: 5     // Isya 5 menit
+    Fajr: 5, Dhuhr: 5, Asr: 5, Maghrib: 5, Isha: 5
 };
 
 let jadwalSholat = {};
@@ -12,133 +8,109 @@ let isSholatMode = false;
 let sholatEndTime = null;
 let sholatNameActive = "";
 
-// 1. Ambil Data Jadwal Sholat dari API (Tulungagung sebagai default)
 async function getPrayerTimes() {
     try {
-        // Menggunakan koordinat Tulungagung
         const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Tulungagung&country=Indonesia&method=2');
         const data = await response.json();
-        const timings = data.data.timings;
+        const t = data.data.timings;
         
-        // Simpan ke object global
-        jadwalSholat = {
-            Fajr: timings.Fajr,
-            Dhuhr: timings.Dhuhr,
-            Asr: timings.Asr,
-            Maghrib: timings.Maghrib,
-            Isha: timings.Isha
-        };
+        jadwalSholat = { Fajr: t.Fajr, Dhuhr: t.Dhuhr, Asr: t.Asr, Maghrib: t.Maghrib, Isha: t.Isha };
 
-        // Tampilkan ke UI
-        document.getElementById('shubuh-time').innerText = timings.Fajr;
-        document.getElementById('dhuhr-time').innerText = timings.Dhuhr;
-        document.getElementById('asr-time').innerText = timings.Asr;
-        document.getElementById('maghrib-time').innerText = timings.Maghrib;
-        document.getElementById('isha-time').innerText = timings.Isha;
+        // Update UI
+        document.getElementById('imsak-time').innerText = t.Imsak;
+        document.getElementById('shubuh-time').innerText = t.Fajr;
+        document.getElementById('dhuha-time').innerText = t.Sunrise; // Menggunakan data Sunrise API
+        document.getElementById('dhuhr-time').innerText = t.Dhuhr;
+        document.getElementById('asr-time').innerText = t.Asr;
+        document.getElementById('maghrib-time').innerText = t.Maghrib;
+        document.getElementById('isha-time').innerText = t.Isha;
 
-    } catch (error) {
-        console.error("Gagal mengambil jadwal sholat:", error);
+        // Cek apakah ada sisa durasi dari sesi sebelumnya (setelah refresh)
+        checkPersistedState();
+
+    } catch (e) { console.error(e); }
+}
+
+function checkPersistedState() {
+    const savedEnd = localStorage.getItem('sholatEndTime');
+    const savedName = localStorage.getItem('sholatNameActive');
+    
+    if (savedEnd && savedName) {
+        const endTime = new Date(parseInt(savedEnd));
+        if (endTime > new Date()) {
+            isSholatMode = true;
+            sholatEndTime = endTime;
+            sholatNameActive = savedName;
+            highlightActiveSholat(savedName);
+        } else {
+            localStorage.removeItem('sholatEndTime');
+            localStorage.removeItem('sholatNameActive');
+        }
     }
 }
 
-// Helper format angka agar selalu 2 digit (misal 5 menjadi 05)
-function padZero(num) {
-    return num.toString().padStart(2, '0');
-}
-
-// 2. Sistem Validasi dan Loop Jam Utama
 function updateClock() {
     const now = new Date();
-    
-    // Format Jam Real-Time Normal
-    const hours = padZero(now.getHours());
-    const minutes = padZero(now.getMinutes());
-    const seconds = padZero(now.getSeconds());
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
     const currentTimeString = `${hours}:${minutes}`;
 
     const clockDisplay = document.getElementById('digital-clock');
-    const statusLabel = document.getElementById('status-label');
     const container = document.querySelector('.clock-card');
 
-    // Cek apakah sedang dalam masa durasi sholat
     if (isSholatMode) {
         const timeDiff = sholatEndTime - now;
-
         if (timeDiff > 0) {
-            // Hitung sisa waktu Countdown
-            const countdownMin = padZero(Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60)));
-            const countdownSec = padZero(Math.floor((timeDiff % (1000 * 60)) / 1000));
-            
-            statusLabel.innerText = `WAKTU SHOLAT ${sholatNameActive.toUpperCase()}`;
-            clockDisplay.innerText = `${countdownMin}:${countdownSec}`;
+            const min = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+            const sec = Math.floor((timeDiff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+            document.getElementById('status-label').innerText = `SHOLAT ${sholatNameActive.toUpperCase()}`;
+            clockDisplay.innerText = `${min}:${sec}`;
             container.classList.add('mode-sholat');
-            return; // Berhenti di sini agar tidak overwrite dengan jam asli
+            return;
         } else {
-            // Durasi sholat habis, kembalikan ke normal
             isSholatMode = false;
             container.classList.remove('mode-sholat');
+            localStorage.removeItem('sholatEndTime');
+            localStorage.removeItem('sholatNameActive');
             document.querySelectorAll('.prayer-time').forEach(el => el.classList.remove('active'));
         }
     }
 
-    // Jika normal, jalankan jam asli
-    statusLabel.innerText = "WAKTU SEKARANG";
-    clockDisplay.innerText = `${hours}:${seconds.split('').map(()=>'').join('') === '' ? seconds : seconds}`; 
+    // Jam Normal
+    document.getElementById('status-label').innerText = "WAKTU SEKARANG";
     clockDisplay.innerHTML = `${hours}:${minutes}<span style="font-size:1.8rem; color:#8a8d9b;">:${seconds}</span>`;
 
-    // Cek kecocokan waktu sekarang dengan jadwal sholat 
+    // Trigger Mode Sholat (hanya untuk waktu wajib)
     Object.keys(jadwalSholat).forEach(sholat => {
         if (currentTimeString === jadwalSholat[sholat]) {
-            // Trigger masuk mode sholat jika belum aktif
             isSholatMode = true;
             sholatNameActive = sholat;
+            sholatEndTime = new Date(now.getTime() + (durasiSholat[sholat] * 60000));
             
-            // Tentukan kapan waktu hitung mundur selesai
-            sholatEndTime = new Date(now.getTime() + durasiSholat[sholat] * 60000);
+            // Simpan ke storage agar tidak reset saat refresh
+            localStorage.setItem('sholatEndTime', sholatEndTime.getTime());
+            localStorage.setItem('sholatNameActive', sholat);
             
-            // Mainkan efek suara alarm/pemberitahuan
             document.getElementById('notification-sound').play();
-            
-            // Beri tanda aktif pada list jadwal
             highlightActiveSholat(sholat);
         }
     });
 
-    // Tampilkan Tanggal
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('date-display').innerText = now.toLocaleDateString('id-ID', options);
+    document.getElementById('date-display').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function highlightActiveSholat(sholat) {
     document.querySelectorAll('.prayer-time').forEach(el => el.classList.remove('active'));
-    if(sholat === 'Fajr') document.getElementById('shubuh-card').classList.add('active');
-    if(sholat === 'Dhuhr') document.getElementById('dhuhr-card').classList.add('active');
-    if(sholat === 'Asr') document.getElementById('asr-card').classList.add('active');
-    if(sholat === 'Maghrib') document.getElementById('maghrib-card').classList.add('active');
-    if(sholat === 'Isha') document.getElementById('isha-card').classList.add('active');
+    const map = { 'Fajr': 'shubuh-card', 'Dhuhr': 'dhuhr-card', 'Asr': 'asr-card', 'Maghrib': 'maghrib-card', 'Isha': 'isha-card' };
+    if(map[sholat]) document.getElementById(map[sholat]).classList.add('active');
 }
 
-// Jalankan fungsi
+// Logika Tema (tetap)
+const themeSelector = document.getElementById('bg-theme');
+const savedTheme = localStorage.getItem('selectedTheme');
+if (savedTheme) { document.body.setAttribute('data-theme', savedTheme); themeSelector.value = savedTheme; }
+themeSelector.addEventListener('change', function() { document.body.setAttribute('data-theme', this.value); localStorage.setItem('selectedTheme', this.value); });
+
 getPrayerTimes();
 setInterval(updateClock, 1000);
-
-// ==========================================================================
-// SISTEM PENYIMPANAN TEMA (LOCAL STORAGE)
-// ==========================================================================
-const themeSelector = document.getElementById('bg-theme');
-
-// 1. Cek apakah ada tema yang tersimpan sebelumnya saat halaman dimuat
-const savedTheme = localStorage.getItem('selectedTheme');
-if (savedTheme) {
-    document.body.setAttribute('data-theme', savedTheme);
-    themeSelector.value = savedTheme; // Sesuaikan tampilan opsi di dropdown
-}
-
-// 2. Simpan pilihan tema baru ke Local Storage saat dropdown diganti
-themeSelector.addEventListener('change', function() {
-    const selectedTheme = this.value;
-    document.body.setAttribute('data-theme', selectedTheme);
-    
-    // Menyimpan string tema ke browser agar permanen meskipun di-refresh
-    localStorage.setItem('selectedTheme', selectedTheme);
-});
