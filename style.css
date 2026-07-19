@@ -214,10 +214,9 @@ header h1 {
     }
 }
 
-.action-buttons { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
-.action-buttons button { padding: 10px 20px; border-radius: 10px; border: none; background: #00f0ff; color: #000; font-weight: bold; cursor: pointer; }
-
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { background: #161925; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; border: 1px solid #ff007f; }
-.modal-content input, .modal-content select, .modal-content textarea { width: 100%; margin-bottom: 10px; padding: 10px; background: #1f2336; border: 1px solid #3d425c; color: #fff; border-radius: 8px; }
-.list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #3d425c; margin-bottom: 5px; }
+.btn-add { background: #ff007f; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+.modal-content { background: #161925; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #00f0ff; }
+.modal input, .modal select, .modal textarea { padding: 10px; background: #0d0e15; border: 1px solid #3d425c; color: white; border-radius: 5px; }
+#reminder-list-container { margin-top: 20px; text-align: left; }
+.reminder-item { background: #1f2336; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }

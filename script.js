@@ -122,69 +122,80 @@ function highlightActiveSholat(sholat) {
 getPrayerTimes();
 setInterval(updateClock, 1000);
 
-// Meminta izin notifikasi saat aplikasi dibuka
-if (Notification.permission !== "granted") Notification.requestPermission();
+// Meminta izin notifikasi saat load
+document.addEventListener("DOMContentLoaded", () => {
+    if (Notification.permission !== "granted") Notification.requestPermission();
+    loadReminders();
+});
 
-function openModal(type) { document.getElementById(type + '-modal').style.display = 'flex'; if(type==='list') renderReminders(); }
-function closeModal(type) { document.getElementById(type + '-modal').style.display = 'none'; }
+function toggleModal(show) { document.getElementById('reminder-modal').style.display = show ? 'flex' : 'none'; }
 
 function saveReminder() {
-    let title = document.getElementById('rem-title').value;
-    let time = document.getElementById('rem-time').value;
-    let repeat = document.getElementById('rem-repeat').value;
-    let desc = document.getElementById('rem-desc').value;
-
-    if(!title || !time) return alert("Mohon isi judul dan waktu!");
-
-    let reminders = JSON.parse(localStorage.getItem('myReminders') || '[]');
-    reminders.push({ id: Date.now(), title, time, repeat, desc, triggered: false });
-    localStorage.setItem('myReminders', JSON.stringify(reminders));
+    const r = {
+        id: Date.now(),
+        name: document.getElementById('ev-name').value,
+        date: document.getElementById('ev-date').value,
+        time: document.getElementById('ev-time').value,
+        repeat: document.getElementById('ev-repeat').value,
+        desc: document.getElementById('ev-desc').value
+    };
     
-    closeModal('create');
-    alert("Pengingat disimpan!");
+    let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
+    list.push(r);
+    localStorage.setItem('myReminders', JSON.stringify(list));
+    loadReminders();
+    toggleModal(false);
 }
 
-function renderReminders() {
-    let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
-    let container = document.getElementById('reminder-list');
-    container.innerHTML = list.map(item => `
-        <div class="list-item">
-            <span><b>${item.title}</b> (${item.time})</span>
-            <button onclick="deleteReminder(${item.id})" style="background:red; color:white; border:none; padding:5px; border-radius:5px;">Hapus</button>
-        </div>
-    `).join('');
+function loadReminders() {
+    const list = JSON.parse(localStorage.getItem('myReminders') || '[]');
+    const container = document.getElementById('reminder-list');
+    container.innerHTML = '';
+    list.forEach(r => {
+        container.innerHTML += `
+            <li class="reminder-item">
+                <span><b>${r.name}</b><br><small>${r.date} ${r.time}</small></span>
+                <button onclick="deleteReminder(${r.id})">Hapus</button>
+            </li>`;
+    });
 }
 
 function deleteReminder(id) {
-    if(confirm("Yakin ingin menghapus acara ini?")) {
-        let reminders = JSON.parse(localStorage.getItem('myReminders') || '[]');
-        reminders = reminders.filter(r => r.id !== id);
-        localStorage.setItem('myReminders', JSON.stringify(reminders));
-        renderReminders();
+    if(confirm("Apakah Anda yakin ingin membatalkan pengingat ini?")) {
+        let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
+        list = list.filter(r => r.id !== id);
+        localStorage.setItem('myReminders', JSON.stringify(list));
+        loadReminders();
     }
 }
 
-// Cek waktu pengingat setiap detik (di dalam fungsi setInterval utama)
+// Tambahkan pengecekan ini di dalam fungsi setInterval(updateClock, 1000)
 function checkReminders() {
-    let reminders = JSON.parse(localStorage.getItem('myReminders') || '[]');
-    let now = new Date();
-    let currTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
+    const now = new Date();
+    const nowStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-    reminders.forEach(item => {
-        if (item.time === currTime && !item.triggered) {
-            new Notification("Pengingat: " + item.title, { body: item.desc || "Waktunya acara!" });
-            item.triggered = true;
-            
-            // Hapus jika tidak harian
-            if (item.repeat === 'once') {
-                reminders = reminders.filter(r => r.id !== item.id);
+    list.forEach((r, index) => {
+        if (`${r.date} ${r.time}` === nowStr) {
+            // Tampilkan Notifikasi
+            if (Notification.permission === "granted") {
+                new Notification(r.name, { body: r.desc || "Waktunya acara dimulai!" });
             }
-        } else if (item.time !== currTime) {
-            item.triggered = false; // Reset trigger saat waktu sudah lewat
+            
+            // Logika Otomatis Hapus atau Update (Harian)
+            if (r.repeat === 'once') {
+                list.splice(index, 1);
+            } else {
+                // Untuk harian, update tanggal ke besok
+                let nextDate = new Date(r.date);
+                nextDate.setDate(nextDate.getDate() + 1);
+                list[index].date = nextDate.toISOString().split('T')[0];
+            }
+            localStorage.setItem('myReminders', JSON.stringify(list));
+            loadReminders();
         }
     });
-    localStorage.setItem('myReminders', JSON.stringify(reminders));
 }
 
-// Tambahkan panggil fungsi checkReminders ke dalam setInterval yang sudah ada
+// Tambahkan panggil checkReminders() di dalam fungsi interval:
 // setInterval(() => { updateClock(); checkReminders(); }, 1000);
