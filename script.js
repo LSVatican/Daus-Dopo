@@ -122,80 +122,85 @@ function highlightActiveSholat(sholat) {
 getPrayerTimes();
 setInterval(updateClock, 1000);
 
-// Meminta izin notifikasi saat load
-document.addEventListener("DOMContentLoaded", () => {
-    if (Notification.permission !== "granted") Notification.requestPermission();
-    loadReminders();
-});
+// --- SISTEM PENGINGAT ---
 
-function toggleModal(show) { document.getElementById('reminder-modal').style.display = show ? 'flex' : 'none'; }
-
-function saveReminder() {
-    const r = {
-        id: Date.now(),
-        name: document.getElementById('ev-name').value,
-        date: document.getElementById('ev-date').value,
-        time: document.getElementById('ev-time').value,
-        repeat: document.getElementById('ev-repeat').value,
-        desc: document.getElementById('ev-desc').value
-    };
-    
-    let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
-    list.push(r);
-    localStorage.setItem('myReminders', JSON.stringify(list));
-    loadReminders();
-    toggleModal(false);
+// Minta izin notifikasi saat load
+if ("Notification" in window) {
+    Notification.requestPermission();
 }
 
-function loadReminders() {
-    const list = JSON.parse(localStorage.getItem('myReminders') || '[]');
-    const container = document.getElementById('reminder-list');
-    container.innerHTML = '';
-    list.forEach(r => {
-        container.innerHTML += `
-            <li class="reminder-item">
-                <span><b>${r.name}</b><br><small>${r.date} ${r.time}</small></span>
-                <button onclick="deleteReminder(${r.id})">Hapus</button>
-            </li>`;
+function openModal() { document.getElementById('reminder-modal').classList.remove('hidden'); }
+function closeModal() { document.getElementById('reminder-modal').classList.add('hidden'); }
+
+// Fungsi Simpan
+function saveReminder() {
+    const title = document.getElementById('rem-title').value;
+    const date = document.getElementById('rem-date').value;
+    const time = document.getElementById('rem-time').value;
+    const repeat = document.getElementById('rem-repeat').value;
+    const desc = document.getElementById('rem-desc').value;
+
+    const newReminder = { id: Date.now(), title, date, time, repeat, desc };
+    let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+    reminders.push(newReminder);
+    localStorage.setItem('reminders', JSON.stringify(reminders));
+    
+    renderReminders();
+    closeModal();
+}
+
+// Fungsi Render List
+function renderReminders() {
+    const list = document.getElementById('reminder-list');
+    let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+    list.innerHTML = '';
+    
+    reminders.forEach((r, index) => {
+        const div = document.createElement('div');
+        div.className = 'reminder-item';
+        div.innerHTML = `<div><strong>${r.title}</strong><br><small>${r.date} ${r.time}</small></div>
+                         <button onclick="deleteReminder(${index})" style="background:transparent; border:none; color:red;">✕</button>`;
+        list.appendChild(div);
     });
 }
 
-function deleteReminder(id) {
+// Fungsi Hapus dengan Konfirmasi
+function deleteReminder(index) {
     if(confirm("Apakah Anda yakin ingin membatalkan pengingat ini?")) {
-        let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
-        list = list.filter(r => r.id !== id);
-        localStorage.setItem('myReminders', JSON.stringify(list));
-        loadReminders();
+        let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+        reminders.splice(index, 1);
+        localStorage.setItem('reminders', JSON.stringify(reminders));
+        renderReminders();
     }
 }
 
-// Tambahkan pengecekan ini di dalam fungsi setInterval(updateClock, 1000)
+// Cek Pengingat setiap detik
 function checkReminders() {
-    let list = JSON.parse(localStorage.getItem('myReminders') || '[]');
+    let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
     const now = new Date();
-    const nowStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const currentDateStr = now.toISOString().split('T')[0];
 
-    list.forEach((r, index) => {
-        if (`${r.date} ${r.time}` === nowStr) {
-            // Tampilkan Notifikasi
-            if (Notification.permission === "granted") {
-                new Notification(r.name, { body: r.desc || "Waktunya acara dimulai!" });
-            }
+    reminders.forEach((r, index) => {
+        // Cek jika waktu cocok
+        if (r.time === currentTimeStr && r.date === currentDateStr) {
+            // Trigger Notifikasi Browser
+            new Notification(`Pengingat: ${r.title}`, { body: r.desc || "Waktunya tiba!" });
             
-            // Logika Otomatis Hapus atau Update (Harian)
-            if (r.repeat === 'once') {
-                list.splice(index, 1);
-            } else {
-                // Untuk harian, update tanggal ke besok
-                let nextDate = new Date(r.date);
-                nextDate.setDate(nextDate.getDate() + 1);
-                list[index].date = nextDate.toISOString().split('T')[0];
+            // Auto Hapus jika bukan harian
+            if (r.repeat === 'none') {
+                reminders.splice(index, 1);
+                localStorage.setItem('reminders', JSON.stringify(reminders));
+                renderReminders();
             }
-            localStorage.setItem('myReminders', JSON.stringify(list));
-            loadReminders();
         }
     });
 }
 
-// Tambahkan panggil checkReminders() di dalam fungsi interval:
-// setInterval(() => { updateClock(); checkReminders(); }, 1000);
+// Tambahkan event listener tombol buka modal
+document.getElementById('open-modal-btn').addEventListener('click', openModal);
+
+// Jalankan fungsi pengingat di loop interval yang sama
+// Tambahkan baris ini di dalam setInterval(updateClock, 1000) atau buat baru
+setInterval(checkReminders, 10000); // Cek setiap 10 detik agar hemat memori
+renderReminders();
