@@ -12,6 +12,18 @@ let isSholatMode = false;
 let sholatEndTime = null;
 let sholatNameActive = "";
 
+// Cek jika ada tema yang tersimpan di localStorage saat web pertama kali dimuat
+const savedTheme = localStorage.getItem('selectedTheme') || 'default';
+document.body.setAttribute('data-theme', savedTheme);
+
+// Pastikan elemen dropdown select menampilkan opsi yang sesuai saat web dimuat
+window.addEventListener('DOMContentLoaded', () => {
+    const themeSelector = document.getElementById('bg-theme');
+    if (themeSelector) {
+        themeSelector.value = savedTheme;
+    }
+});
+
 // 1. Ambil Data Jadwal Sholat dari API (Tulungagung sebagai default)
 async function getPrayerTimes() {
     try {
