@@ -12,18 +12,6 @@ let isSholatMode = false;
 let sholatEndTime = null;
 let sholatNameActive = "";
 
-// Cek jika ada tema yang tersimpan di localStorage saat web pertama kali dimuat
-const savedTheme = localStorage.getItem('selectedTheme') || 'default';
-document.body.setAttribute('data-theme', savedTheme);
-
-// Pastikan elemen dropdown select menampilkan opsi yang sesuai saat web dimuat
-window.addEventListener('DOMContentLoaded', () => {
-    const themeSelector = document.getElementById('bg-theme');
-    if (themeSelector) {
-        themeSelector.value = savedTheme;
-    }
-});
-
 // 1. Ambil Data Jadwal Sholat dari API (Tulungagung sebagai default)
 async function getPrayerTimes() {
     try {
@@ -134,12 +122,23 @@ function highlightActiveSholat(sholat) {
 getPrayerTimes();
 setInterval(updateClock, 1000);
 
-// Tambahkan baris ini di baris paling akhir file script.js Anda
-
+// ==========================================================================
+// SISTEM PENYIMPANAN TEMA (LOCAL STORAGE)
+// ==========================================================================
 const themeSelector = document.getElementById('bg-theme');
 
+// 1. Cek apakah ada tema yang tersimpan sebelumnya saat halaman dimuat
+const savedTheme = localStorage.getItem('selectedTheme');
+if (savedTheme) {
+    document.body.setAttribute('data-theme', savedTheme);
+    themeSelector.value = savedTheme; // Sesuaikan tampilan opsi di dropdown
+}
+
+// 2. Simpan pilihan tema baru ke Local Storage saat dropdown diganti
 themeSelector.addEventListener('change', function() {
     const selectedTheme = this.value;
-    // Mengubah atribut data-theme pada tag body html
     document.body.setAttribute('data-theme', selectedTheme);
+    
+    // Menyimpan string tema ke browser agar permanen meskipun di-refresh
+    localStorage.setItem('selectedTheme', selectedTheme);
 });
